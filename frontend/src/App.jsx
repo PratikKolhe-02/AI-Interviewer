@@ -1,35 +1,79 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useState } from 'react';
+import axios from 'axios';
+import './App.css';
 
 function App() {
-  const [count, setCount] = useState(0)
+  
+  const [file, setFile] = useState(null);
+  const [status, setStatus] = useState("");
+
+  const handleFileChange = (e) => {
+    const selectedFile = e.target.files[0];
+    setFile(selectedFile); 
+    setStatus("");         
+  };
+
+  
+  const handleUpload = async () => {
+    
+    if (!file) {
+      alert("Please select a file first!");
+      return;
+    }
+
+    setStatus("Uploading...");
+
+    const formData = new FormData();
+    formData.append("file", file); 
+
+    try {
+      const response = await axios.post("http://localhost:5000/upload", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data", 
+        },
+      });
+
+      setStatus("✅ Upload Successful: " + response.data.filename);
+      console.log("Server Response:", response.data);
+
+    } catch (error) {
+      console.error("Error uploading:", error);
+      setStatus("❌ Upload Failed. Is the backend running?");
+    }
+  };
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
+    <div className="app-container" style={{ textAlign: "center", marginTop: "50px" }}>
+      <h1>🤖 AI Interviewer</h1>
+      <p>Upload your resume (PDF) to get started.</p>
+
+      {/* The Upload Box */}
+      <div style={{ border: "2px dashed #ccc", padding: "40px", display: "inline-block" }}>
+        
+        {/* Input for File */}
+        <input type="file" onChange={handleFileChange} accept=".pdf" />
+        <br /><br />
+        
+        {/* The Button */}
+        <button 
+          onClick={handleUpload} 
+          style={{ 
+            padding: "10px 20px", 
+            cursor: "pointer", 
+            backgroundColor: "#007bff", 
+            color: "white", 
+            border: "none", 
+            borderRadius: "5px" 
+          }}
+        >
+          Upload Resume
         </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
       </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+
+      {/* Status Message Area */}
+      {status && <p style={{ marginTop: "20px", fontWeight: "bold" }}>{status}</p>}
+    </div>
+  );
 }
 
-export default App
+export default App;
