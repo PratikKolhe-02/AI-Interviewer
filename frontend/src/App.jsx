@@ -3,75 +3,76 @@ import axios from 'axios';
 import './App.css';
 
 function App() {
-  
   const [file, setFile] = useState(null);
   const [status, setStatus] = useState("");
+  const [resumeText, setResumeText] = useState(""); // New: Store the read text
 
   const handleFileChange = (e) => {
-    const selectedFile = e.target.files[0];
-    setFile(selectedFile); 
-    setStatus("");         
+    setFile(e.target.files[0]);
+    setStatus("");
+    setResumeText(""); // Clear old text when picking new file
   };
 
-  
   const handleUpload = async () => {
-    
     if (!file) {
       alert("Please select a file first!");
       return;
     }
 
-    setStatus("Uploading...");
-
     const formData = new FormData();
-    formData.append("file", file); 
+    formData.append("file", file);
+
+    setStatus("Uploading and analyzing...");
 
     try {
       const response = await axios.post("http://localhost:5000/upload", formData, {
         headers: {
-          "Content-Type": "multipart/form-data", 
+          "Content-Type": "multipart/form-data",
         },
       });
 
-      setStatus("✅ Upload Successful: " + response.data.filename);
+      setStatus("✅ Success! Resume analyzed.");
+      
+      // Save the text we got back from the server
+      setResumeText(response.data.extractedText); 
+      
       console.log("Server Response:", response.data);
 
     } catch (error) {
       console.error("Error uploading:", error);
-      setStatus("❌ Upload Failed. Is the backend running?");
+      setStatus("❌ Upload Failed. Check console.");
     }
   };
 
   return (
-    <div className="app-container" style={{ textAlign: "center", marginTop: "50px" }}>
+    <div className="app-container" style={{ maxWidth: "800px", margin: "0 auto", padding: "20px", textAlign: "center" }}>
       <h1>🤖 AI Interviewer</h1>
-      <p>Upload your resume (PDF) to get started.</p>
+      <p>Upload your resume to extract skills and experience.</p>
 
-      {/* The Upload Box */}
-      <div style={{ border: "2px dashed #ccc", padding: "40px", display: "inline-block" }}>
-        
-        {/* Input for File */}
+      <div style={{ border: "2px dashed #ccc", padding: "20px", marginBottom: "20px" }}>
         <input type="file" onChange={handleFileChange} accept=".pdf" />
         <br /><br />
-        
-        {/* The Button */}
         <button 
           onClick={handleUpload} 
-          style={{ 
-            padding: "10px 20px", 
-            cursor: "pointer", 
-            backgroundColor: "#007bff", 
-            color: "white", 
-            border: "none", 
-            borderRadius: "5px" 
-          }}
+          style={{ padding: "10px 20px", cursor: "pointer", backgroundColor: "#007bff", color: "white", border: "none", borderRadius: "5px" }}
         >
-          Upload Resume
+          Analyze Resume
         </button>
       </div>
 
-      {/* Status Message Area */}
-      {status && <p style={{ marginTop: "20px", fontWeight: "bold" }}>{status}</p>}
+      {status && <p style={{ fontWeight: "bold" }}>{status}</p>}
+
+      {/* Display the extracted text if available */}
+      {resumeText && (
+        <div style={{ marginTop: "30px", textAlign: "left" }}>
+          <h3>📄 What the AI Found:</h3>
+          <textarea 
+            value={resumeText} 
+            readOnly 
+            style={{ width: "100%", height: "300px", padding: "10px", borderRadius: "5px", border: "1px solid #ccc" }}
+          />
+        </div>
+      )}
     </div>
   );
 }
